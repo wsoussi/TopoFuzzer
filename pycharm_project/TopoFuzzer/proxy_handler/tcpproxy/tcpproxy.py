@@ -10,7 +10,13 @@ import ssl
 import time
 import select
 import errno
+from django.conf import settings
+import redis
 
+# Connect to our Redis instance
+redis_instance = redis.StrictRedis(host=settings.REDIS_HOST,
+                                  port=settings.REDIS_PORT, db=0, charset='utf-8', decode_responses=True)
+#
 # TODO: implement verbose output
 # some code snippets, as well as the original idea, from Black Hat Python
 
@@ -313,27 +319,65 @@ def start_proxy_thread(local_socket, args, in_modules, out_modules):
                 s.close()
             raise serr
 
-    try:
-        update_module_hosts(out_modules, local_socket.getpeername(), remote_socket.getpeername())
-        update_module_hosts(in_modules, remote_socket.getpeername(), local_socket.getpeername())
-    except socket.error as serr:
-        if serr.errno == errno.ENOTCONN:
-            # kind of a blind shot at fixing issue #15
-            # I don't yet understand how this error can happen, but if it happens I'll just shut down the thread
-            # the connection is not in a useful state anymore
-            for s in [remote_socket, local_socket]:
-                s.close()
-            return None
-        else:
-            for s in [remote_socket, local_socket]:
-                s.close()
-            print(f"{time.strftime('%Y%m%d-%H%M%S')}: Socket exception in start_proxy_thread")
-            raise serr
+    # try:
+    #     update_module_hosts(out_modules, local_socket.getpeername(), remote_socket.getpeername())
+    #     update_module_hosts(in_modules, remote_socket.getpeername(), local_socket.getpeername())
+    # except socket.error as serr:
+    #     if serr.errno == errno.ENOTCONN:
+    #         # kind of a blind shot at fixing issue #15
+    #         # I don't yet understand how this error can happen, but if it happens I'll just shut down the thread
+    #         # the connection is not in a useful state anymore
+    #         for s in [remote_socket, local_socket]:
+    #             s.close()
+    #         return None
+    #     else:
+    #         for s in [remote_socket, local_socket]:
+    #             s.close()
+    #         print(f"{time.strftime('%Y%m%d-%H%M%S')}: Socket exception in start_proxy_thread")
+    #         raise serr
 
     # This loop ends when no more data is received on either the local or the
     # remote socket
     running = True
+    ip_changed = False
     while running:
+        # check that the target ip is the same
+        actual_target_ip = redis_instance.get(args.listen_ip.replace(".", "-"))
+        if actual_target_ip != args.target_ip:
+            ip_changed = True
+            print("\nA change happened, the new ip is " + actual_target_ip)
+        # TODO if the IP changed close the remote_socket and create a new one with the new ip
+        if ip_changed:
+            # remote_socket.close()
+            # remote_socket = socks.socksocket()
+            args.target_ip = actual_target_ip
+            try:
+                remote_socket.connect((args.target_ip, args.target_port))
+                vprint('After IP change Connected to %s:%d' % remote_socket.getpeername(), args.verbose)
+                log(args.logfile, 'After IP change Connected to %s:%d' % remote_socket.getpeername())
+            except socket.error as serr:
+                if serr.errno == errno.ECONNREFUSED:
+                    for s in [remote_socket, local_socket]:
+                        s.close()
+                    print(
+                        f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection refused After IP change')
+                    log(args.logfile,
+                        f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection refused After IP change')
+                    return None
+                elif serr.errno == errno.ETIMEDOUT:
+                    for s in [remote_socket, local_socket]:
+                        s.close()
+                    print(
+                        f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection timed out After IP change')
+                    log(args.logfile,
+                        f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection timed out After IP change')
+                    return None
+                else:
+                    for s in [remote_socket, local_socket]:
+                        s.close()
+                    raise serr
+            ip_changed = False
+
         read_sockets, _, _ = select.select([remote_socket, local_socket], [], [])
 
         if starttls(args, local_socket, read_sockets):
@@ -368,6 +412,7 @@ def start_proxy_thread(local_socket, args, in_modules, out_modules):
             data = receive_from(sock)
             log(args.logfile, 'Received %d bytes' % len(data))
 
+            counter = 0
             if sock == local_socket:
                 if len(data):
                     log(args.logfile, b'< < < out\n' + data)
@@ -377,14 +422,16 @@ def start_proxy_thread(local_socket, args, in_modules, out_modules):
                                            False,  # incoming data?
                                            args.verbose)
                     remote_socket.send(data.encode() if isinstance(data, str) else data)
+                    counter = 0
                 else:
-                    vprint("Connection from local client %s:%d closed" % peer, args.verbose)
-                    log(args.logfile, "Connection from local client %s:%d closed" % peer)
-                    remote_socket.close()
-                    running = False
-                    break
+                    counter += 1
+                    if counter > 100:
+                        vprint("Connection from local client %s:%d closed" % peer, args.verbose)
+                        log(args.logfile, "Connection from local client %s:%d closed" % peer)
+                        remote_socket.close()
+                        running = False
+                        break
             elif sock == remote_socket:
-                # check that the target ip is the same
                 if len(data):
                     log(args.logfile, b'> > > in\n' + data)
                     if in_modules is not None:

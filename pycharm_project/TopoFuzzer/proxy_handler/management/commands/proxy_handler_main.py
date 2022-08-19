@@ -76,7 +76,22 @@ def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
     CLI(net)
     net.stop()
 
-
+def log(handle, message, message_only=False):
+    # if message_only is True, only the message will be logged
+    # otherwise the message will be prefixed with a timestamp and a line is
+    # written after the message to make the log file easier to read
+    if not isinstance(message, bytes):
+        message = bytes(message, 'ascii')
+    if handle is None:
+        return
+    if not message_only:
+        logentry = bytes("%s %s\n" % (time.strftime('%Y%m%d-%H%M%S'), str(time.time())), 'ascii')
+    else:
+        logentry = b''
+    logentry += message
+    if not message_only:
+        logentry += b'\n' + b'-' * 20 + b'\n'
+    handle.write(logentry)
 def manage_proxies(motdec_port, onos_port):
     global threads
     #TODO LATER  start mininet topology
@@ -169,34 +184,34 @@ def manage_proxies(motdec_port, onos_port):
                                                    out_modules))
             print("Starting proxy thread " + proxy_thread.name)
             proxy_thread.start()
-            thread_dict = {"p_thread": proxy_thread, "in_socket" : in_socket, "args": args}
-            threads.append(thread_dict)
-            # print("the thread list is " + str(threads))
-            # if server IP changed replace the socket thread with a new one
-            new_threads = []
-            for thread_dict in threads:
-                p_thread = thread_dict["p_thread"]
-                thread_in_socket = thread_dict["in_socket"]
-                thread_args = thread_dict["args"]
-                actual_target_ip = redis_instance.get(thread_args.listen_ip.replace(".", "-"))
-                # TODO include actual_target_ip in the thread tuple
-                # mark old closed threads
-                if not p_thread.is_alive():
-                    p_thread.handled = True
-                # if thread alive and target_ip changes kill the thread with old out_socket and start one with a new out_socket
-                if not p_thread.handled and actual_target_ip != thread_args.target_ip:
-                    print("\nA change happened, the new ip is " + actual_target_ip)
-                    p_thread.kill()
-                    p_thread.handled = True
-                    thread_args.target_ip = actual_target_ip
-                    proxy_thread = thread_with_trace(target=tcpproxy.start_proxy_thread,
-                                                     args=(thread_in_socket, thread_args, in_modules,
-                                                           out_modules))
-                    proxy_thread.start()
-                    new_thread_dict = {"p_thread": proxy_thread, "in_socket": thread_in_socket, "args": thread_args}
-                    new_threads.append(new_thread_dict)
-            threads = threads + new_threads
-            threads = [thread_dict for thread_dict in threads if not thread_dict["p_thread"].handled]
+            # thread_dict = {"p_thread": proxy_thread, "in_socket" : in_socket, "args": args}
+            # threads.append(thread_dict)
+            # # print("the thread list is " + str(threads))
+            # # if server IP changed replace the socket thread with a new one
+            # new_threads = []
+            # for thread_dict in threads:
+            #     p_thread = thread_dict["p_thread"]
+            #     thread_in_socket = thread_dict["in_socket"]
+            #     thread_args = thread_dict["args"]
+            #     actual_target_ip = redis_instance.get(thread_args.listen_ip.replace(".", "-"))
+            #     # TODO include actual_target_ip in the thread tuple
+            #     # mark old closed threads
+            #     if not p_thread.is_alive():
+            #         p_thread.handled = True
+            #     # if thread alive and target_ip changes kill the thread with old out_socket and start one with a new out_socket
+            #     if not p_thread.handled and actual_target_ip != thread_args.target_ip:
+            #         print("\nA change happened, the new ip is " + actual_target_ip)
+            #         p_thread.kill()
+            #         p_thread.handled = True
+            #         thread_args.target_ip = actual_target_ip
+            #         proxy_thread = thread_with_trace(target=tcpproxy.start_proxy_thread,
+            #                                          args=(thread_in_socket, thread_args, in_modules,
+            #                                                out_modules))
+            #         proxy_thread.start()
+            #         new_thread_dict = {"p_thread": proxy_thread, "in_socket": thread_in_socket, "args": thread_args}
+            #         new_threads.append(new_thread_dict)
+            # threads = threads + new_threads
+            # threads = [thread_dict for thread_dict in threads if not thread_dict["p_thread"].handled]
 
     except KeyboardInterrupt:
         log(args.logfile, 'Ctrl+C detected, exiting...')
