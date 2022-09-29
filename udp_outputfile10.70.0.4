@@ -1,0 +1,24 @@
+10.70.0.4 found its VNF ip: 10.161.2.152
+vnf ip: 10.161.2.152
+add POSTROUTING MASQUERADE rule
+sudo: unable to resolve host topofuzzer: Resource temporarily unavailable
+add NAT rule
+sudo: unable to resolve host topofuzzer: Resource temporarily unavailable
+Traceback (most recent call last):
+  File "manage.py", line 22, in <module>
+    main()
+  File "manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/__init__.py", line 413, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/base.py", line 354, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/base.py", line 398, in execute
+    output = self.handle(*args, **options)
+  File "/home/ubuntu/pycharm_project/TopoFuzzer/proxy_handler/management/commands/udp_nat.py", line 84, in handle
+    udp_forwarder(mn_ip, vnf_ip)
+  File "/home/ubuntu/pycharm_project/TopoFuzzer/proxy_handler/management/commands/udp_nat.py", line 48, in udp_forwarder
+    print("new vnf ip: " + new_vnf_ip)
+TypeError: must be str, not NoneType
