@@ -23,7 +23,6 @@ threads = []
 redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
                                   port=settings.REDIS_PORT, password= "topofuzzer", db=0, charset='utf-8', decode_responses=True)
 
-
 class Object(object):
     pass
 
@@ -148,6 +147,10 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
             in_socket, in_addrinfo = proxy_socket.accept()
             print('Connection from %s:%d' % in_addrinfo)
             print("targetting " + args.target_ip + ":" + str(args.target_port))
+            # refetch the private ip in case it changed
+            vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
+            if vnf_ip != args.target_ip:
+                args.target_ip = vnf_ip
             # get original port from the TopoFuzzer conntrack
             dst_port = get_target_port_from_conntrack(dst_ip=mn_ip, src_ip=in_addrinfo[0], src_port=in_addrinfo[1])
             args.target_port = int(dst_port)

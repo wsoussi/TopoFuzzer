@@ -140,6 +140,8 @@ def host_alloc(request, *args, **kwargs):
         else:
             total_mn_hosts = 0
         print(str(total_mn_hosts))
+        # update free_mn_hosts
+        free_mn_hosts = total_mn_hosts - len(mapped_vnfs)
         # get non assigned VNFs
         for key in redis_instance.keys("*"):
             key_string = key
@@ -155,7 +157,11 @@ def host_alloc(request, *args, **kwargs):
                 redis_instance.set("10_70_0_" + str((total_mn_hosts - free_mn_hosts)), non_assigned_vnf_ip)
                 redis_instance.lpush("mapped_vnfs", key_string)
                 mapped_vnfs.append(key_string)
-
+            elif key_string.startswith("VNF") and key_string in mapped_vnfs:
+                priv_ip = redis_instance.get(key)
+                index = mapped_vnfs.index(key_string)
+                redis_instance.set(priv_ip.replace('.', '-'), "10.70.0." + str(index))
+                redis_instance.set("10_70_0_" + str((index)), priv_ip)
         response = {
             'msg': 'success'
         }
@@ -166,7 +172,6 @@ def host_alloc(request, *args, **kwargs):
         for el in mapped_vnfs:
             redis_instance.lpush("mapped_vnfs", el)
         redis_instance.set("free_mn_hosts", free_mn_hosts)
-
         return Response(response, status=200)
     else:
         return Response(response, status=404)

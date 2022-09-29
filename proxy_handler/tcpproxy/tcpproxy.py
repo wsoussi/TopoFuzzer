@@ -294,6 +294,11 @@ def start_proxy_thread(local_socket, args, in_modules, out_modules):
     # passing it on.
     remote_socket = socks.socksocket()
 
+    actual_target_ip = redis_instance.get(args.listen_ip.replace(".", "_"))
+    if actual_target_ip != args.target_ip:
+        ip_changed = True
+        print("\nA change happened, the new ip is " + str(actual_target_ip))
+    args.target_ip = actual_target_ip
     if args.proxy_ip:
         proxy_types = {'SOCKS5': socks.SOCKS5, 'SOCKS4': socks.SOCKS4, 'HTTP': socks.HTTP}
         remote_socket.set_proxy(proxy_types[args.proxy_type], args.proxy_ip, args.proxy_port)

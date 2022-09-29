@@ -6,13 +6,14 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE','my_django_project.settings')
 import django
 django.setup()
 import time
-from mininet.topolib import TorusTopo, TreeNet
+from mininet.topolib import TorusTopo, TreeNet, TreeTopo
 from django.conf import settings
 import redis
 from mininet.cli import CLI
 from mininet.net import Mininet
-from mininet.node import RemoteController, OVSKernelSwitch
+from mininet.node import RemoteController, OVSKernelSwitch, Node
 import threading
+import asyncio
 import socket
 from proxy_handler.tcpproxy import tcpproxy
 import pickle
@@ -31,6 +32,40 @@ mn_hosts_number = 20
 mn_ipBase = "10.70.0.0/16"
 
 threads = []
+
+
+class LinuxRouter( Node ):
+    "A Node with IP forwarding enabled."
+
+    def config( self, **params ):
+        super( LinuxRouter, self).config( **params )
+        # Enable forwarding on the router
+        self.cmd( 'sysctl net.ipv4.ip_forward=1' )
+
+    def terminate( self ):
+        super( LinuxRouter, self ).terminate()
+
+
+# class NetworkTopo( Topo ):
+#     "A LinuxRouter connecting three IP subnets"
+#
+#     def build( self, **_opts ):
+#     #    net = Mininet(controller=RemoteController, switch=OVSKernelSwitch)
+#
+#      #   c1 = net.addController('c1', controller=RemoteController, ip="10.128.0.4")
+#          #     c2 = net.addController('c2', controller=RemoteController, ip="127.0.0.1", port=6633)
+#         defaultIP = '10.70.1.1/16'  # IP address for r0-eth1
+#         router = self.addNode( 'r0', cls=LinuxRouter, ip=defaultIP )
+#
+#         s1 = self.addSwitch( "s1" )
+#
+#         self.addLink( s1, router, intfName2='r0-eth1',
+#                       params2={ 'ip' : defaultIP } )  # for clarity
+#
+#         h1 = self.addHost( 'h1', ip='192.168.1.100/24',
+#                            defaultRoute='via 192.168.1.1' )
+#
+#         self.addLink( h1, s1 )
 
 
 # implement "killable" thread
@@ -74,6 +109,17 @@ class thread_with_trace(threading.Thread):
 #         net.addLink(s1, h)
 
 
+# def addROUTER(topo):
+#     defaultIP = '10.70.1.1/16'  # IP address for r0-eth1
+#     router = topo.addNode('r0', cls=LinuxRouter, ip=defaultIP)
+#     s1 = topo.get("s1")
+#     topo.addLink(s1, router, intfName2='r0-eth1',
+#                  params2={'ip': defaultIP})
+#     hosts = topo.hosts
+#     for h in hosts:
+#         h.addRoute(defaultIP)
+
+
 def add_port_nat(net, mn_ip):
     proxy_port = settings.PROXY_PORT
     command0 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport "+ str(settings.PROXY_PORT) +" -j ACCEPT"
@@ -81,6 +127,15 @@ def add_port_nat(net, mn_ip):
     nat0 = net.get("nat0")
     nat0.cmd(command0)
     nat0.cmd(command1)
+
+
+def add_port_s1(net, mn_ip):
+    proxy_port = settings.PROXY_PORT
+    command0 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport "+ str(settings.PROXY_PORT) +" -j ACCEPT"
+    command1 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport 1:65535 -j DNAT --to-destination "+ mn_ip +":"+str(proxy_port)
+    s1 = net.get("s1")
+    s1.cmd(command0)
+    s1.cmd(command1)
 
 
 def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
@@ -94,6 +149,13 @@ def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
     # net.addController(controller)
 
     net.addNAT().configDefault()
+
+    #---------------------TEST----------------------------------
+    # topo = TreeTopo(depth=1, fanout=mn_hosts_number)
+    # topo = addROUTER(topo)
+    # net = Mininet(topo=topo, controller=controller, ipBase='111.0.0.0/8') #topo=topo
+    #------------------------------------------------------------
+
     net.start()
 
     # check every VNF and assign a host through redis
@@ -108,9 +170,11 @@ def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
         if count < 4:
             h.cmd('cd pycharmh1_project/TopoFuzzer | ls')
             # add NAT rule to nat0 node to redirect ports to port 5555 of the specific host ip
-            add_port_nat(net, h.IP())
-            # start the proxy script and make it look first for the privateIP in redis, if no privateIP is found, the script will sleep and check every 1 second
-            h.cmd('python manage.py mnHostProxy --proxy-ip ' + h.IP() + ' &> outputfile' + h.IP() + ' &')
+            add_port_s1(net, h.IP())
+            # start the tcp proxy script and make it look first for the privateIP in redis, if no privateIP is found, the script will sleep and check every 1 second
+            h.cmd('python manage.py mnHostProxy --proxy-ip ' + h.IP() + ' &> tcp_outputfile' + h.IP() + ' &')
+            # start the udp proxy script in the same way
+            h.cmd('python manage.py udp_nat --proxy-ip ' + h.IP() + ' &> udp_outputfile' + h.IP() + ' &')
             print("done" + str(count))
         count += 1
     CLI(net)
