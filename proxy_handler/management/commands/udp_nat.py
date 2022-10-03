@@ -14,22 +14,6 @@ import json
 redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
                                   port=settings.REDIS_PORT, password= "topofuzzer", db=0, charset='utf-8', decode_responses=True)
 
-# result: give the conntrack
-def get_client_ip_from_conntrack(src_ip, dst_ip, src_port):
-    res = subprocess.run(["sudo", "conntrack", "-L", "--dst", dst_ip, "--src", src_ip], stdout=subprocess.PIPE)
-    res = str(res.stdout.decode("utf-8"))
-    res = res.split("\\n")
-    line = res[0]
-    print("res: " + str(res[0]))
-    result = None
-    if "udp" in line and "sport=" + str(src_port) in line:
-        result = re.search("dst=" + dst_ip + " sport=" + str(src_port) + " dport=(.*) src", line)
-    print(result)
-    dst_port = result.group(1)
-    response = {
-        'msg': dst_port
-    }
-    return Response(response, status=200)
 
 def udp_forwarder(mn_ip, vnf_ip):
     # add NAT rule
@@ -45,12 +29,10 @@ def udp_forwarder(mn_ip, vnf_ip):
         while True:
             new_vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
             if new_vnf_ip != vnf_ip:
-                print("new vnf ip: " + new_vnf_ip)
+                print("new vnf ip: " + str(new_vnf_ip))
                 # update NAT by removing the old DNAT rule and adding the new one
-                os.system("sudo iptables -t nat -D PREROUTING -p UDP -d " + mn_ip + " --dport 1:65535 -j DNAT --to-destination " +
-                          vnf_ip)
-                os.system("sudo iptables -t nat -A PREROUTING -p UDP -d " + mn_ip + " --dport 1:65535 -j DNAT --to-destination " +
-                    new_vnf_ip)
+                os.system("sudo iptables -t nat -D PREROUTING -p UDP -d " + mn_ip + " --dport 1:65535 -j DNAT --to-destination " + vnf_ip)
+                os.system("sudo iptables -t nat -A PREROUTING -p UDP -d " + mn_ip + " --dport 1:65535 -j DNAT --to-destination " + new_vnf_ip)
                 vnf_ip = new_vnf_ip
             time.sleep(0.0001)
     # if the code is stopped with Ctrl+C delete the DNAT rules for each mapps element
