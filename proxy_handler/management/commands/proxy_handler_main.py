@@ -120,15 +120,6 @@ class thread_with_trace(threading.Thread):
 #         h.addRoute(defaultIP)
 
 
-def add_port_nat(net, mn_ip):
-    proxy_port = settings.PROXY_PORT
-    command0 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport "+ str(settings.PROXY_PORT) +" -j ACCEPT"
-    command1 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport 1:65535 -j DNAT --to-destination "+ mn_ip +":"+str(proxy_port)
-    nat0 = net.get("nat0")
-    nat0.cmd(command0)
-    nat0.cmd(command1)
-
-
 def add_port_s1(net, mn_ip):
     proxy_port = settings.PROXY_PORT
     command0 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport "+ str(settings.PROXY_PORT) +" -j ACCEPT"
