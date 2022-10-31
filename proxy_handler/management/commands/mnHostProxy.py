@@ -17,9 +17,11 @@ import socket
 from proxy_handler.tcpproxy import tcpproxy
 import requests
 
+IP_TRANSPARENT = 19
+
 threads = []
 
-# Connect to our Rs1 routeedis instance
+# Connect to our redis instance
 redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
                                   port=settings.REDIS_PORT, password= "topofuzzer", db=0, charset='utf-8', decode_responses=True)
 
@@ -92,7 +94,10 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     args.logfile = None
     args.list = None
     args.help_modules = None
-    args.listen_ip = mn_ip
+    # get last octet of the ip mn_ip
+    last_octet = mn_ip.split('.')[-1]
+    args.listen_ip = "127.0.0."+last_octet
+    args.mn_ip = mn_ip
     args.listen_port = mn_port
     args.target_ip = vnf_ip
     args.target_port = None # filled later
@@ -134,27 +139,36 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    proxy_socket.setsockopt(socket.IPPROTO_IP, IP_TRANSPARENT, 1)
+    """
+    To bind-to-all-ports trick using TPROXY use the following iptables command:
+    sudo iptables -t mangle -I PREROUTING \
+        -d <pub_IP> -p tcp \
+        -j TPROXY --on-port=5555 --on-ip=<pub_IP>
+    """
+
     try:
         proxy_socket.bind((args.listen_ip, args.listen_port))
     except socket.error as e:
         print("Error at bind: " + e.strerror)
         sys.exit(5)
 
-    proxy_socket.listen(5)
+    proxy_socket.listen(32)
     # endless loop until ctrl+c
     try:
         while True:
             in_socket, in_addrinfo = proxy_socket.accept()
             print('Connection from %s:%d' % in_addrinfo)
+            l_ip, l_port = in_socket.getsockname()
+            args.target_port = l_port
             print("targetting " + args.target_ip + ":" + str(args.target_port))
             # refetch the private ip in case it changed
             vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
             if vnf_ip != args.target_ip:
                 args.target_ip = vnf_ip
-            # get original port from the TopoFuzzer conntrack
-            dst_port = get_target_port_from_conntrack(dst_ip=mn_ip, src_ip=in_addrinfo[0], src_port=in_addrinfo[1])
-            args.target_port = int(dst_port)
-            # create thread if the in_socket is
+            os.system("iptables -t mangle -I PREROUTING -s " + args.target_ip + "/32 -j RETURN")
+
+            # create thread
             proxy_thread = thread_with_trace(target=tcpproxy.start_proxy_thread,
                                              args=(in_socket, args, in_modules,
                                                    out_modules))

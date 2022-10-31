@@ -6,7 +6,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE','my_django_project.settings')
 import django
 django.setup()
 import time
-from mininet.topolib import TorusTopo, TreeNet, TreeTopo
+# from mininet.topolib import TorusTopo, TreeNet, TreeTopo
+from mininet.topolib import Topo
 from django.conf import settings
 import redis
 from mininet.cli import CLI
@@ -19,6 +20,149 @@ from proxy_handler.tcpproxy import tcpproxy
 import pickle
 
 from mininet.examples.multipoll import monitorFiles
+mn_ipBase = "10.70.0.0/16"
+
+
+class NAT( Node ):
+    "NAT: Provides connectivity to external network"
+
+    def __init__( self, name, subnet=mn_ipBase,
+                  localIntf=None, flush=False, **params):
+        """Start NAT/forwarding between Mininet and external network
+           subnet: Mininet subnet (default 10.0/8)
+           flush: flush iptables before installing NAT rules"""
+        super( NAT, self ).__init__( name, **params )
+
+        self.subnet = subnet
+        self.localIntf = localIntf
+        self.flush = flush
+        self.forwardState = self.cmd( 'sysctl -n net.ipv4.ip_forward' ).strip()
+
+    def setManualConfig( self, intf ):
+        """Prevent network-manager/networkd from messing with our interface
+           by specifying manual configuration in /etc/network/interfaces"""
+        cfile = '/etc/network/interfaces'
+        line = '\niface %s inet manual\n' % intf
+        try:
+            with open( cfile ) as f:
+                config = f.read()
+        except IOError:
+            config = ''
+        if ( line ) not in config:
+            info( '*** Adding "' + line.strip() + '" to ' + cfile + '\n' )
+            with open( cfile, 'a' ) as f:
+                f.write( line )
+            # Probably need to restart network manager to be safe -
+            # hopefully this won't disconnect you
+            self.cmd( 'service network-manager restart || netplan apply' )
+
+    # pylint: disable=arguments-differ
+    def config( self, **params ):
+        """Configure the NAT and iptables"""
+
+        if not self.localIntf:
+            self.localIntf = self.defaultIntf()
+
+        self.setManualConfig( self.localIntf )
+
+        # Now we can configure manually without interference
+        super( NAT, self).config( **params )
+
+        if self.flush:
+            # self.cmd( 'sysctl net.ipv4.ip_forward=0' )
+            self.cmd( 'iptables -F' )
+            # self.cmd( 'iptables -t nat -F' )
+            # Create default entries for unmatched traffic
+            self.cmd( 'iptables -P INPUT ACCEPT' )
+            self.cmd( 'iptables -P OUTPUT ACCEPT' )
+            self.cmd( 'iptables -P FORWARD DROP' )
+
+        # Install NAT rules
+        self.cmd( 'iptables -I FORWARD',
+                  '-i', self.localIntf, '-d', self.subnet, '-j DROP' )
+        self.cmd( 'iptables -A FORWARD',
+                  '-i', self.localIntf, '-s', self.subnet, '-j ACCEPT' )
+        self.cmd( 'iptables -A FORWARD',
+                  '-o', self.localIntf, '-d', self.subnet, '-j ACCEPT' )
+        # self.cmd( 'iptables -t nat -A POSTROUTING',
+        #           '-s', self.subnet, "'!'", '-d', self.subnet,
+        #           '-j MASQUERADE' )
+        # Instruct the kernel to perform forwarding
+        self.cmd( 'sysctl net.ipv4.ip_forward=1' )
+        # self.cmd('iptables -t nat -D POSTROUTING 1')
+
+    def terminate( self ):
+        "Stop NAT/forwarding between Mininet and external network"
+        # Remote NAT rules
+        self.cmd( 'iptables -D FORWARD',
+                   '-i', self.localIntf, '-d', self.subnet, '-j DROP' )
+        self.cmd( 'iptables -D FORWARD',
+                  '-i', self.localIntf, '-s', self.subnet, '-j ACCEPT' )
+        self.cmd( 'iptables -D FORWARD',
+                  '-o', self.localIntf, '-d', self.subnet, '-j ACCEPT' )
+        # self.cmd( 'iptables -t nat -D POSTROUTING',
+        #           '-s', self.subnet, '\'!\'', '-d', self.subnet,
+        #           '-j MASQUERADE' )
+        # Put the forwarding state back to what it was
+        self.cmd( 'sysctl net.ipv4.ip_forward=%s' % self.forwardState )
+        super( NAT, self ).terminate()
+
+def addNAT(net, name='nat0', connect=True, inNamespace=False,
+           **params):
+    """Add a NAT to the Mininet network
+       name: name of NAT node
+       connect: switch to connect to | True (s1) | None
+       inNamespace: create in a network namespace
+       params: other NAT node params, notably:
+           ip: used as default gateway address"""
+    nat = net.addHost(name, cls=NAT, inNamespace=inNamespace,
+                       subnet=net.ipBase, **params)
+    # find first switch and create link
+    if connect:
+        if not isinstance(connect, Node):
+            # Use first switch if not specified
+            connect = net.switches[0]
+        # Connect the nat to the switch
+        net.addLink(nat, connect)
+        # Set the default route on hosts
+        natIP = nat.params['ip'].split('/')[0]
+        for host in net.hosts:
+            if host.inNamespace:
+                host.setDefaultRoute('via %s' % natIP)
+    return nat
+
+
+class TreeTopo( Topo ):
+    "Topology for a tree network with a given depth and fanout."
+
+    def build( self, depth=1, fanout=2 ):
+        # Numbering:  h1..N, s1..M
+        self.hostNum = 1
+        self.switchNum = 1
+        # Build topology
+        self.addTree( depth, fanout )
+
+    def addTree( self, depth, fanout ):
+        """Add a subtree starting with node n.
+           returns: last node added"""
+        isSwitch = depth > 0
+        if isSwitch:
+            node = self.addSwitch( 's%s' % self.switchNum )
+            self.switchNum += 1
+            for _ in range( fanout ):
+                child = self.addTree( depth - 1, fanout )
+                self.addLink( node, child )
+        else:
+            node = self.addHost( 'h%s' % self.hostNum) # ip="10.70.1." + str(self.hostNum), defaultRoute = "via 10.70.0.1"
+            self.hostNum += 1
+        return node
+
+
+def TreeNet( depth=1, fanout=2, **kwargs ):
+    "Convenience function for creating tree networks."
+    topo = TreeTopo( depth, fanout )
+    return Mininet( topo, **kwargs )
+
 
 class Object(object):
     pass
@@ -29,10 +173,7 @@ redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
 
 mn_hosts_number = 20
 
-mn_ipBase = "10.70.0.0/16"
-
 threads = []
-
 
 class LinuxRouter( Node ):
     "A Node with IP forwarding enabled."
@@ -44,28 +185,6 @@ class LinuxRouter( Node ):
 
     def terminate( self ):
         super( LinuxRouter, self ).terminate()
-
-
-# class NetworkTopo( Topo ):
-#     "A LinuxRouter connecting three IP subnets"
-#
-#     def build( self, **_opts ):
-#     #    net = Mininet(controller=RemoteController, switch=OVSKernelSwitch)
-#
-#      #   c1 = net.addController('c1', controller=RemoteController, ip="10.128.0.4")
-#          #     c2 = net.addController('c2', controller=RemoteController, ip="127.0.0.1", port=6633)
-#         defaultIP = '10.70.1.1/16'  # IP address for r0-eth1
-#         router = self.addNode( 'r0', cls=LinuxRouter, ip=defaultIP )
-#
-#         s1 = self.addSwitch( "s1" )
-#
-#         self.addLink( s1, router, intfName2='r0-eth1',
-#                       params2={ 'ip' : defaultIP } )  # for clarity
-#
-#         h1 = self.addHost( 'h1', ip='192.168.1.100/24',
-#                            defaultRoute='via 192.168.1.1' )
-#
-#         self.addLink( h1, s1 )
 
 
 # implement "killable" thread
@@ -101,32 +220,20 @@ class thread_with_trace(threading.Thread):
         self.killed = True
         self.handled = True
 
+# def add_port_s1(net, mn_ip):
+#     proxy_port = settings.PROXY_PORT
+#     command0 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport "+ str(settings.PROXY_PORT) +" -j ACCEPT"
+#     command1 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport 1:65535 -j DNAT --to-destination "+ mn_ip +":"+str(proxy_port)
+#     s1 = net.get("s1")
+#     s1.cmd(command0)
+#     s1.cmd(command1)
 
-# def createTopo(net, nb_hosts):
-#     s1 = net.addSwitch('s1', cls = OVSKernelSwitch, protocols = 'OpenFlow13')
-#     for i in range(1,nb_hosts + 1):
-#         h = net.addHost("h"+str(i))
-#         net.addLink(s1, h)
-
-
-# def addROUTER(topo):
-#     defaultIP = '10.70.1.1/16'  # IP address for r0-eth1
-#     router = topo.addNode('r0', cls=LinuxRouter, ip=defaultIP)
-#     s1 = topo.get("s1")
-#     topo.addLink(s1, router, intfName2='r0-eth1',
-#                  params2={'ip': defaultIP})
-#     hosts = topo.hosts
-#     for h in hosts:
-#         h.addRoute(defaultIP)
-
-
-def add_port_s1(net, mn_ip):
+def add_TPROXY_rule(h, mn_ip, count):
     proxy_port = settings.PROXY_PORT
-    command0 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport "+ str(settings.PROXY_PORT) +" -j ACCEPT"
-    command1 = "sudo iptables -t nat -A PREROUTING -d "+ mn_ip +" -p tcp -m tcp --dport 1:65535 -j DNAT --to-destination "+ mn_ip +":"+str(proxy_port)
-    s1 = net.get("s1")
-    s1.cmd(command0)
-    s1.cmd(command1)
+    command0 = "ip route add local " + mn_ip + " dev lo src 127.0.0." + str(count + 1)
+    command1 = "iptables -t mangle -I PREROUTING ! -s 10.161.2.164 -d " + mn_ip + " -p tcp -j TPROXY --on-port=" + str(proxy_port) + " --on-ip=127.0.0." + str(count + 1)
+    h.cmd(command0)
+    h.cmd(command1)
 
 
 def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
@@ -139,13 +246,8 @@ def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
     # net = Mininet(topo=topo, controller=controller, ipBase='111.0.0.0/8') #topo=topo
     # net.addController(controller)
 
-    net.addNAT().configDefault()
-
-    #---------------------TEST----------------------------------
-    # topo = TreeTopo(depth=1, fanout=mn_hosts_number)
-    # topo = addROUTER(topo)
-    # net = Mininet(topo=topo, controller=controller, ipBase='111.0.0.0/8') #topo=topo
-    #------------------------------------------------------------
+    # add customized NAT
+    addNAT(net).configDefault()
 
     net.start()
 
@@ -161,7 +263,9 @@ def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
         if count < 4:
             h.cmd('cd pycharmh1_project/TopoFuzzer | ls')
             # add NAT rule to nat0 node to redirect ports to port 5555 of the specific host ip
-            add_port_s1(net, h.IP())
+            add_TPROXY_rule(h, h.IP(), count)
+            h.cmd("setcap cap_net_raw,cap_net_admin=eip manage.py")
+            h.cmd("setcap cap_net_raw,cap_net_admin=eip mnHostProxy.py")
             # start the tcp proxy script and make it look first for the privateIP in redis, if no privateIP is found, the script will sleep and check every 1 second
             h.cmd('python manage.py mnHostProxy --proxy-ip ' + h.IP() + ' &> tcp_outputfile' + h.IP() + ' &')
             # start the udp proxy script in the same way

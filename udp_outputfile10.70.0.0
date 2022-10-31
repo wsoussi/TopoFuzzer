@@ -1,0 +1,39 @@
+Traceback (most recent call last):
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/connection.py", line 612, in connect
+    lambda: self._connect(), lambda error: self.disconnect(error)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/retry.py", line 46, in call_with_retry
+    return do()
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/connection.py", line 612, in <lambda>
+    lambda: self._connect(), lambda error: self.disconnect(error)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/connection.py", line 677, in _connect
+    raise err
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/connection.py", line 665, in _connect
+    sock.connect(socket_address)
+OSError: [Errno 113] No route to host
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "manage.py", line 22, in <module>
+    main()
+  File "manage.py", line 18, in main
+    execute_from_command_line(sys.argv)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/__init__.py", line 419, in execute_from_command_line
+    utility.execute()
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/__init__.py", line 413, in execute
+    self.fetch_command(subcommand).run_from_argv(self.argv)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/base.py", line 354, in run_from_argv
+    self.execute(*args, **cmd_options)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/django/core/management/base.py", line 398, in execute
+    output = self.handle(*args, **options)
+  File "/home/ubuntu/pycharm_project/TopoFuzzer/proxy_handler/management/commands/udp_nat.py", line 55, in handle
+    vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/commands/core.py", line 1705, in get
+    return self.execute_command("GET", name)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/client.py", line 1235, in execute_command
+    conn = self.connection or pool.get_connection(command_name, **options)
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/connection.py", line 1387, in get_connection
+    connection.connect()
+  File "/home/ubuntu/.local/lib/python3.6/site-packages/redis/connection.py", line 617, in connect
+    raise ConnectionError(self._error_message(e))
+redis.exceptions.ConnectionError: Error 113 connecting to 10.161.2.164:6379. No route to host.
