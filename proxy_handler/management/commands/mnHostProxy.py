@@ -62,21 +62,6 @@ class thread_with_trace(threading.Thread):
         self.handled = True
 
 
-def get_target_port_from_conntrack(src_ip, dst_ip, src_port):
-    url = "http://"+ settings.TOPOFUZZER_IP +":8000/api/conntrack/"
-    payload = json.dumps({
-        "dst_ip": dst_ip,
-        "src_ip": src_ip,
-        "src_port": src_port
-    })
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    response = requests.request("PUT", url, headers=headers, data=payload)
-    res = json.loads(response.text)
-    return res["msg"]
-
-
 def start_proxy(mn_ip, mn_port, vnf_ip):
     args = Object()
     args.verbose = True
