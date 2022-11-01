@@ -294,10 +294,6 @@ def start_proxy_thread(local_socket, args, in_modules, out_modules):
     # passing it on.
     remote_socket = socks.socksocket()
 
-    # actual_target_ip = redis_instance.get(args.mn_ip.replace(".", "_"))
-    # if actual_target_ip != args.target_ip:
-    #     print("\nA change happened, the new ip is " + str(actual_target_ip))
-    #     args.target_ip = actual_target_ip
     if args.proxy_ip:
         proxy_types = {'SOCKS5': socks.SOCKS5, 'SOCKS4': socks.SOCKS4, 'HTTP': socks.HTTP}
         remote_socket.set_proxy(proxy_types[args.proxy_type], args.proxy_ip, args.proxy_port)
@@ -331,46 +327,6 @@ def start_proxy_thread(local_socket, args, in_modules, out_modules):
     idle_counter_local = 0
     idle_counter_server = 0
     while running:
-        # # check that the target ip is the same
-        # actual_target_ip = redis_instance.get(args.mn_ip.replace(".", "_"))
-        # if actual_target_ip != args.target_ip:
-        #     ip_changed = True
-        #     print("\nA change happened, the new ip is " + str(actual_target_ip))
-        #     os.system("iptables -t mangle -I PREROUTING -s " + actual_target_ip + "/32 -j RETURN")
-        #
-        # # if the IP changed close the remote_socket and create a new one with the new ip
-        # if ip_changed:
-        #     remote_socket.close()
-        #     remote_socket = socks.socksocket()
-        #     old_ip = args.target_ip
-        #     args.target_ip = actual_target_ip
-        #     try:
-        #         remote_socket.connect((args.target_ip, args.target_port))
-        #         vprint('After IP change Connected to %s:%d' % remote_socket.getpeername(), args.verbose)
-        #         log(args.logfile, 'After IP change Connected to %s:%d' % remote_socket.getpeername())
-        #     except socket.error as serr:
-        #         if serr.errno == errno.ECONNREFUSED:
-        #             for s in [remote_socket, local_socket]:
-        #                 s.close()
-        #             print(
-        #                 f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection refused After IP change')
-        #             log(args.logfile,
-        #                 f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection refused After IP change')
-        #             return None
-        #         elif serr.errno == errno.ETIMEDOUT:
-        #             for s in [remote_socket, local_socket]:
-        #                 s.close()
-        #             print(
-        #                 f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection timed out After IP change')
-        #             log(args.logfile,
-        #                 f'{time.strftime("%Y%m%d-%H%M%S")}, {args.target_ip}:{args.target_port}- Connection timed out After IP change')
-        #             return None
-        #         else:
-        #             for s in [remote_socket, local_socket]:
-        #                 s.close()
-        #             raise serr
-        #     ip_changed = False
-        #     os.system("iptables -t mangle -D PREROUTING -s " + old_ip + "/32 -j RETURN")
         read_sockets, _, _ = select.select([remote_socket, local_socket], [], [])
 
         for sock in read_sockets:
