@@ -5,21 +5,17 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE','my_django_project.settings')
 import django
 django.setup()
 import time
-from mininet.topolib import TorusTopo
 from django.conf import settings
 import redis
-import json
-from mininet.cli import CLI
-from mininet.net import Mininet
-from mininet.node import RemoteController, OVSKernelSwitch
 import threading
 import socket
 from proxy_handler.tcpproxy import tcpproxy
-import requests
+
+IP_TRANSPARENT = 19
 
 threads = []
 
-# Connect to our Rs1 routeedis instance
+# Connect to our redis instance
 redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
                                   port=settings.REDIS_PORT, password= "topofuzzer", db=0, charset='utf-8', decode_responses=True)
 
@@ -60,22 +56,7 @@ class thread_with_trace(threading.Thread):
         self.handled = True
 
 
-def get_target_port_from_conntrack(src_ip, dst_ip, src_port):
-    url = "http://"+ settings.TOPOFUZZER_IP +":8000/api/conntrack/"
-    payload = json.dumps({
-        "dst_ip": dst_ip,
-        "src_ip": src_ip,
-        "src_port": src_port
-    })
-    headers = {
-        'Content-Type': 'application/json'
-    }
-    response = requests.request("PUT", url, headers=headers, data=payload)
-    res = json.loads(response.text)
-    return res["msg"]
-
-
-def start_proxy(mn_ip, mn_port, vnf_ip):
+def start_proxy(mn_port):
     args = Object()
     args.verbose = True
     args.use_ssl = False
@@ -83,7 +64,7 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     args.client_key = None
     args.server_certificate = None
     args.server_key = None
-    args.proxy_ip = None # mn_ip
+    args.proxy_ip = None
     args.proxy_port = None # settings.PROXY_PORT + 1
     args.proxy_type = 'SOCKS5'
     args.in_modules = None
@@ -92,9 +73,9 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     args.logfile = None
     args.list = None
     args.help_modules = None
-    args.listen_ip = mn_ip
+    args.listen_ip = "127.0.0.1"
     args.listen_port = mn_port
-    args.target_ip = vnf_ip
+    args.target_ip = None
     args.target_port = None # filled later
 
     if ((args.client_key is None) ^ (args.client_certificate is None)):
@@ -134,27 +115,36 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     proxy_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     proxy_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+    proxy_socket.setsockopt(socket.IPPROTO_IP, IP_TRANSPARENT, 1)
+    """
+    To bind-to-all-ports trick using TPROXY use the following iptables command:
+    sudo iptables -t mangle -I PREROUTING \
+        -d <pub_IP> -p tcp \
+        -j TPROXY --on-port=5555 --on-ip=<pub_IP>
+    """
+
     try:
         proxy_socket.bind((args.listen_ip, args.listen_port))
     except socket.error as e:
         print("Error at bind: " + e.strerror)
         sys.exit(5)
 
-    proxy_socket.listen(5)
+    proxy_socket.listen(32)
     # endless loop until ctrl+c
     try:
         while True:
             in_socket, in_addrinfo = proxy_socket.accept()
             print('Connection from %s:%d' % in_addrinfo)
-            print("targetting " + args.target_ip + ":" + str(args.target_port))
-            # refetch the private ip in case it changed
-            vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
-            if vnf_ip != args.target_ip:
-                args.target_ip = vnf_ip
-            # get original port from the TopoFuzzer conntrack
-            dst_port = get_target_port_from_conntrack(dst_ip=mn_ip, src_ip=in_addrinfo[0], src_port=in_addrinfo[1])
-            args.target_port = int(dst_port)
-            # create thread if the in_socket is
+            l_ip, l_port = in_socket.getsockname()
+            print("targetting " + l_ip + ":" + str(l_port))
+            # fetch the private ip from the public one
+            vnf_ip = redis_instance.get(l_ip.replace(".", "_"))
+            args.mn_ip = l_ip
+            args.target_ip = vnf_ip
+            args.target_port = l_port
+            os.system("iptables -t mangle -I PREROUTING -s " + args.target_ip + "/32 -j RETURN")
+
+            # create thread
             proxy_thread = thread_with_trace(target=tcpproxy.start_proxy_thread,
                                              args=(in_socket, args, in_modules,
                                                    out_modules))
@@ -167,9 +157,6 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        # Positional arguments
-        parser.add_argument('--proxy-ip', dest='proxy_ip', type=str, help='Private IP address of the VNF', action="store", required=True)
-
         # Named (optional) arguments
         parser.add_argument('--motdec-port', type=str, help='MOTDEC port', action="store", required=False)
         parser.add_argument('--onos-port', type=int, help='ONOS port', required=False)
@@ -183,15 +170,4 @@ class Command(BaseCommand):
             onos_port = options['onos_port']
         else:
             onos_port = 6653
-        mn_ip = options['proxy_ip']
-        # idle until a VNF IP is mapped to the proxy
-        map_found = False
-        while not map_found:
-            vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
-            if vnf_ip:
-                map_found = True
-                print(mn_ip + " found its VNF ip: " + vnf_ip)
-            else:
-                time.sleep(0.1)
-        print("vnf ip: " + vnf_ip)
-        start_proxy(mn_ip, settings.PROXY_PORT, vnf_ip)
+        start_proxy(settings.PROXY_PORT)
