@@ -24,7 +24,6 @@ You can read a detailed presentation of TopoFuzzer
 
 **PREREQUIREMENTS:**
 - install redis and configure it to get connected with the external IP of the host (not 127.0.0.1)
-- For v0.2 add MANGLE iptables rules
 
 **INSTALL:**
 - install with pip
@@ -39,7 +38,7 @@ You can read a detailed presentation of TopoFuzzer
 4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
 
 
-**Deploy a single redirection proxy for all services**
+**Deploy a single redirection proxy for all services (available in v0.2)**
 
 This option is convenient when the isolation of traffic between services is not relevant and allows to reduce the CPU consumption by at least 20 fold (for 4 services and over). The main reason is that only one proxy and listener is deployed for all the services.
 4. Add TPROXY mangling rule with the command ````sudo iptables -t mangle -I PREROUTING ! -s <host_IP> -d <services_public_IP_range> -p tcp -j TPROXY --on-port=5555 --on-ip=127.0.0.1````
@@ -49,6 +48,4 @@ This option is convenient when the isolation of traffic between services is not 
 
 ## :book: Usage and documentation:
 Now you can transfer open connections to different instances of your service dynamically and control the mininet middle-network using your SDNC.
-More details on the deployment, the usage of TopoFuzzer, and the description of the REST API interface is detailed in the Wiki/Documentation here below.
-
-[//]: # (- [Wiki]&#40;https://github.com/topofuzzer/wiki&#41;)
+More details on the deployment, the usage of TopoFuzzer, and the description of the REST API interface is detailed in the Wiki/Documentation here: [Wiki](https://github.com/wsoussi/TopoFuzzer/wiki)
