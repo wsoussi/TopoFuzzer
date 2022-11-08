@@ -1,0 +1,16 @@
+Prerequisites:
+- Ubuntu18.04
+- Python3.6.9 (sudo apt install python3.6)
+- Python3-pip (sudo apt install python3-pip)
+- Mininet 2.3.0: To install mininet with hosts using python3 interpreters version 2.3.0 and up is needed. Follow option 2  of the mininet guide:
+http://mininet.org/download/ . For the last command to install mininet use the following:
+```sudo mininet/util/install.sh -nfv```
+- redis (sudo apt install redis). Set redis to use the external IP of your machine or VM.
+
+
+Install TopoFuzzer:
+```git clone https://github.com/wsoussi/TopoFuzzer.git```
+```git checkout v0.1-fixes```
+```python3.6 -m virtualenv venv```
+```source venv/bin/activate```
+```pip install -r requirements.txt```

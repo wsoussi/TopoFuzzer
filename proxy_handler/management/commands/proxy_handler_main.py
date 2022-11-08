@@ -199,15 +199,15 @@ def manage_proxies(motdec_ip, onos_port):
 class Command(BaseCommand):
     def add_arguments(self, parser):
         # Positional arguments
-        parser.add_argument('--onos-ip', dest='onos_ip', type=str, help='MOTDEC hostname or IP address', action="store", required=True)
+        parser.add_argument('--sdnc-ip', dest='sdnc_ip', type=str, help='External SDN Controller hostname or IP address', action="store", required=True)
 
         # Named (optional) arguments
-        parser.add_argument('--onos-port', type=int, help='ONOS port', required=False)
+        parser.add_argument('--sdnc-port', type=int, help='External SDN Controller port', required=False)
 
     def handle(self, *args, **options):
-        if options['onos_port']:
-            onos_port = options['onos_port']
+        if options['sdnc_port']:
+            sdnc_port = options['sdnc_port']
         else:
             onos_port = 6653
-        onos_ip = options['onos_ip']
-        manage_proxies(onos_ip, onos_port)
+        sdnc_ip = options['sdnc_ip']
+        manage_proxies(onos_ip, sdnc_port)
