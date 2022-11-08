@@ -5,8 +5,8 @@
 ## :page_with_curl: What is TopoFuzzer?
 
 TopoFuzzer is a gateway node with two main functionalities:
-1. It assists your service (containers or VMs) migration and reinstantiation at the networking level, using an API to update the mapping between the public IP used by users and the private IP allocated to the new instance. The advantage of TopoFuzzer is the live handover of connections without having to re-establish them. This is critical for services with long lived connections.
-2. It establishes a mininet network allowing for dynamic changes of the network topology to disrupt reconnaissance and scanning of external and internal users.
+1. It assists your service (containers or VMs) migration and reinstantiation at the networking level, mapping the public IP used by users to connect and the private IP allocated to the new instance. The advantage of TopoFuzzer is the live handover of connections without having to close them and re-establish them. This is critical for a seamless migration of services with long lived connections.
+2. It establishes a mininet network allowing for dynamic changes of the network topology to disrupt reconnaissance and scanning of external and internal attackers with Moving Target Defense (MTD) strategies.
 
 You can read a detailed presentation of TopoFuzzer
 
@@ -15,9 +15,9 @@ You can read a detailed presentation of TopoFuzzer
 - REST API to update the mapping between the public IP and the private IP of a service
 - Instant handover of TCP connections: _e.g.,_ HTTP/2
 - Instant handover of UDP connections: _e.g.,_ QUIC, HTTP/3
-- No TLS certificates handling needed for HTTPS/3
+- No TLS certificates needed for HTTPS/3 (no trust on the intermediary needed)
 - Add and remove nodes, switches, and links dynamically with the mininet API
-- Change the traffic flow in the data plane by connecting an external SDN controller 
+- Change the traffic paths in the data plane by connecting an external SDN controller 
 
 
 ## :hammer_and_pick: Quick Start
