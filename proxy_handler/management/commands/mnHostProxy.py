@@ -5,17 +5,11 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE','my_django_project.settings')
 import django
 django.setup()
 import time
-from mininet.topolib import TorusTopo
 from django.conf import settings
 import redis
-import json
-from mininet.cli import CLI
-from mininet.net import Mininet
-from mininet.node import RemoteController, OVSKernelSwitch
 import threading
 import socket
 from proxy_handler.tcpproxy import tcpproxy
-import requests
 
 IP_TRANSPARENT = 19
 
@@ -62,7 +56,7 @@ class thread_with_trace(threading.Thread):
         self.handled = True
 
 
-def start_proxy(mn_ip, mn_port, vnf_ip):
+def start_proxy(mn_port):
     args = Object()
     args.verbose = True
     args.use_ssl = False
@@ -70,7 +64,7 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     args.client_key = None
     args.server_certificate = None
     args.server_key = None
-    args.proxy_ip = None # mn_ip
+    args.proxy_ip = None
     args.proxy_port = None # settings.PROXY_PORT + 1
     args.proxy_type = 'SOCKS5'
     args.in_modules = None
@@ -79,12 +73,9 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
     args.logfile = None
     args.list = None
     args.help_modules = None
-    # get last octet of the ip mn_ip
-    last_octet = mn_ip.split('.')[-1]
-    args.listen_ip = "127.0.0."+last_octet
-    args.mn_ip = mn_ip
+    args.listen_ip = "127.0.0.1"
     args.listen_port = mn_port
-    args.target_ip = vnf_ip
+    args.target_ip = None
     args.target_port = None # filled later
 
     if ((args.client_key is None) ^ (args.client_certificate is None)):
@@ -145,12 +136,12 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
             in_socket, in_addrinfo = proxy_socket.accept()
             print('Connection from %s:%d' % in_addrinfo)
             l_ip, l_port = in_socket.getsockname()
+            print("targetting " + l_ip + ":" + str(l_port))
+            # fetch the private ip from the public one
+            vnf_ip = redis_instance.get(l_ip.replace(".", "_"))
+            args.mn_ip = l_ip
+            args.target_ip = vnf_ip
             args.target_port = l_port
-            print("targetting " + args.target_ip + ":" + str(args.target_port))
-            # refetch the private ip in case it changed
-            vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
-            if vnf_ip != args.target_ip:
-                args.target_ip = vnf_ip
             os.system("iptables -t mangle -I PREROUTING -s " + args.target_ip + "/32 -j RETURN")
 
             # create thread
@@ -166,9 +157,6 @@ def start_proxy(mn_ip, mn_port, vnf_ip):
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        # Positional arguments
-        parser.add_argument('--proxy-ip', dest='proxy_ip', type=str, help='Private IP address of the VNF', action="store", required=True)
-
         # Named (optional) arguments
         parser.add_argument('--motdec-port', type=str, help='MOTDEC port', action="store", required=False)
         parser.add_argument('--onos-port', type=int, help='ONOS port', required=False)
@@ -182,15 +170,4 @@ class Command(BaseCommand):
             onos_port = options['onos_port']
         else:
             onos_port = 6653
-        mn_ip = options['proxy_ip']
-        # idle until a VNF IP is mapped to the proxy
-        map_found = False
-        while not map_found:
-            vnf_ip = redis_instance.get(mn_ip.replace(".", "_"))
-            if vnf_ip:
-                map_found = True
-                print(mn_ip + " found its VNF ip: " + vnf_ip)
-            else:
-                time.sleep(0.1)
-        print("vnf ip: " + vnf_ip)
-        start_proxy(mn_ip, settings.PROXY_PORT, vnf_ip)
+        start_proxy(settings.PROXY_PORT)
