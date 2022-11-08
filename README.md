@@ -23,10 +23,20 @@ You can read a detailed presentation of TopoFuzzer
 ## :hammer_and_pick: Quick Start
 
 **PREREQUIREMENTS:**
-- install redis and configure it to get connected with the external IP of the host (not 127.0.0.1)
+- Operating System: Ubuntu 18.04
+- Python3.6.9 (```sudo apt install python3.6```)
+- Python3-pip (```sudo apt install python3-pip```)
+- Mininet 2.3.0 (follow option 2  of the mininet guide http://mininet.org/download/)
+- redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM.
+
 
 **INSTALL:**
-- install with pip
+
+1. ```git clone https://github.com/wsoussi/TopoFuzzer.git```
+2. ```git checkout v0.1-fixes```
+3. ```python3.6 -m virtualenv venv```
+4. ```source venv/bin/activate```
+5. ```pip install -r requirements.txt```
 
 **DEPLOY:**
 1. change the file `settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP` and `REDIS_PORT` (default port is 6379)
