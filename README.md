@@ -8,7 +8,6 @@ TopoFuzzer is a gateway node with two main functionalities:
 1. It assists your service (containers or VMs) migration and reinstantiation at the networking level, mapping the public IP used by users to connect and the private IP allocated to the new instance. The advantage of TopoFuzzer is the live handover of connections without having to close them and re-establish them. This is critical for a seamless migration of services with long lived connections.
 2. It establishes a mininet network allowing for dynamic changes of the network topology to disrupt reconnaissance and scanning of external and internal attackers with Moving Target Defense (MTD) strategies.
 
-You can read a detailed presentation of TopoFuzzer
 
 ## :clipboard: Features
 
@@ -22,7 +21,7 @@ You can read a detailed presentation of TopoFuzzer
 
 ## :hammer_and_pick: Quick Start
 
-**PREREQUIREMENTS:**
+**REQUIREMENTS:**
 - Operating System: Ubuntu 18.04
 - Python3.6.9 (```sudo apt install python3.6```)
 - Python3-pip (```sudo apt install python3-pip```)
