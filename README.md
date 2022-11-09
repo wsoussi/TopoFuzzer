@@ -31,11 +31,21 @@ TopoFuzzer is a gateway node with two main functionalities:
 
 **INSTALL:**
 
-1. ```git clone https://github.com/wsoussi/TopoFuzzer.git```
-2. ```git checkout v0.1-fixes```
-3. ```python3.6 -m virtualenv venv```
-4. ```source venv/bin/activate```
-5. ```pip install -r requirements.txt```
+Use the following commands to install TopoFuzzer:
+1. ```bash 
+   git clone https://github.com/wsoussi/TopoFuzzer.git
+   ```
+2. ```bash
+   git checkout v0.1-fixes
+   ```
+3. ```bash
+   python3.6 -m virtualenv venv
+   ```
+4. ```bash
+   source venv/bin/activate
+   ```
+5. ```
+   pip install -r requirements.txt
 
 **DEPLOY:**
 1. change the file `settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP` and `REDIS_PORT` (default port is 6379)
