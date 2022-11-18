@@ -46,7 +46,6 @@ Use the following commands to install TopoFuzzer:
    ```
 5. ```
    pip install -r requirements.txt
-
 **DEPLOY:**
 1. change the file `settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP` and `REDIS_PORT` (default port is 6379)
 2. create an admin user with the command ```python manage.py createsuperuser```

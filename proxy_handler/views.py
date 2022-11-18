@@ -174,6 +174,9 @@ def host_alloc(request, *args, **kwargs):
         redis_instance.set("free_mn_hosts", free_mn_hosts)
         return Response(response, status=200)
     else:
+        response = {
+            'msg': 'success'
+        }
         return Response(response, status=404)
 
 @api_view(['PUT'])

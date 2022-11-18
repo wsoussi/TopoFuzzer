@@ -242,44 +242,6 @@ def is_client_hello(sock):
             )
 
 
-def enable_ssl(args, remote_socket, local_socket):
-    sni = None
-
-    def sni_callback(sock, name, ctx):
-        nonlocal sni
-        sni = name
-
-    try:
-        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        ctx.sni_callback = sni_callback
-        ctx.load_cert_chain(certfile=args.server_certificate,
-                            keyfile=args.server_key,
-                            )
-        local_socket = ctx.wrap_socket(local_socket,
-                                       server_side=True,
-                                       )
-    except ssl.SSLError as e:
-        print("SSL handshake failed for listening socket", str(e))
-        raise
-
-    try:
-        ctx = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        if args.client_certificate and args.client_key:
-            ctx.load_cert_chain(certfile=args.client_certificate,
-                                keyfile=args.client_key,
-                                )
-        remote_socket = ctx.wrap_socket(remote_socket,
-                                        server_hostname=sni,
-                                        )
-    except ssl.SSLError as e:
-        print("SSL handshake failed for remote socket", str(e))
-        raise
-
-    return [remote_socket, local_socket]
-
-
 def starttls(args, local_socket, read_sockets):
     return (args.use_ssl and
             local_socket in read_sockets and
@@ -540,7 +502,3 @@ def main(args):
         log(args.logfile, 'Ctrl+C detected, exiting...')
         print('\nCtrl+C detected, exiting...')
         sys.exit(0)
-
-
-if __name__ == '__main__':
-    main()
