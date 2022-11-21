@@ -1,5 +1,30 @@
 # <img src="./templates/images/LOGO2.png" alt="drawing" width="150"/>  TopoFuzzer - A Network Topology Fuzzer 
 
+[![License: MIT](https://img.shields.io/badge/License-MIT.svg)](https://mit-license.org/)
+[![GitHub issues](https://img.shields.io/github/issues/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/issues)
+[![GitHub forks](https://img.shields.io/github/forks/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/network)
+[![GitHub stars](https://img.shields.io/github/stars/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/stargazers)
+[![](https://img.shields.io/static/v1?label=docs&message=passing&color=green)](https://github.com/wsoussi/TopoFuzzer/wiki)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=alert_status)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=ncloc)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_index)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=reliability_rating)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=vulnerabilities)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=bugs)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=code_smells)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_rating)]
+(https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+
+<div style="text-align: center;">
+<a href="https://github.com/wsoussi/TopoFuzzer">
+<img src="https://raw.githubusercontent.com/wsoussi/TopoFuzzer/main/templates/images/github_logo_icon.png">
+</a>
+<a href="https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer">
+<img src="https://sonarcloud.io/images/project_badges/sonarcloud-black.svg">
+</a>
+</div>
+
 -----------------------------------------
 
 ## :page_with_curl: What is TopoFuzzer?
