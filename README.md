@@ -13,8 +13,7 @@
 [![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=vulnerabilities)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
 [![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=bugs)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
 [![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=code_smells)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_rating)]
-(https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
+[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
 
 <div style="text-align: center;">
 <a href="https://github.com/wsoussi/TopoFuzzer">
