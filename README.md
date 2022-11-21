@@ -1,6 +1,6 @@
 # <img src="./templates/images/LOGO2.png" alt="drawing" width="150"/>  TopoFuzzer - A Network Topology Fuzzer 
 
-[![License: MIT](https://img.shields.io/badge/License-MIT.svg)](https://mit-license.org/)
+[![License: MIT](https://img.shields.io/static/v1?label=license&message=MIT&color=blue)](https://mit-license.org/)
 [![GitHub issues](https://img.shields.io/github/issues/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/issues)
 [![GitHub forks](https://img.shields.io/github/forks/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/network)
 [![GitHub stars](https://img.shields.io/github/stars/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/stargazers)
