@@ -1,4 +1,3 @@
-@ -1,29 +1,5 @@
 # <img src="./templates/images/LOGO2.png" alt="drawing" width="150"/>  TopoFuzzer - A Network Topology Fuzzer 
 
 [![License: MIT](https://img.shields.io/static/v1?label=license&message=MIT&color=blue)](https://mit-license.org/)
