@@ -1,3 +1,4 @@
 .*
 ./backup
 !/.gitignore
+./db.sqlite3

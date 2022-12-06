@@ -6,8 +6,8 @@ Install TopoFuzzer on Ubuntu 18.04 Operating System. Further requirements before
 - Python3.6.9 (```sudo apt install python3.6```)
 - Python3-pip (```sudo apt install python3-pip```)
 - Mininet 2.3.0 (follow option 2  of the mininet guide http://mininet.org/download/)
-- redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM.
-
+- redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM. To do this edit ```/etc/redis/redis.conf```
+ by changing the line ```bind 127.0.0.1::1``` to ```bind 0.0.0.0``` and uncommenting ```# requirepass <yourpassword>```. Then restart redis with `sudo /etc/init.d/redis-server restart`.
 
 ## Install TopoFuzzer
 
@@ -25,15 +25,17 @@ Use the following commands to install TopoFuzzer:
    source venv/bin/activate
    ```
 5. ```
-   pip install -r requirements.txt
+   pip3 install -r requirements.txt
    ```
 
 
 ## Deploy TopoFuzzer
 
-1. change the file `settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP` and `REDIS_PORT` (default port is 6379)
-2. create an admin user with the command ```python manage.py createsuperuser```
-3. start the server with the command ````python manage.py runserver 0:8000````, which starts the TopoFuzzer REST API interface 
+1. change the file `TopoFuzzer/settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP`, `REDIS_PORT` (default port is 6379), and `REDIS_PASSWORD` to _\<yourpassword\>_.
+2. also in `TopoFuzzer/settings.py`, add the public IP of your hosting machine to `ALLOWED_HOSTS`.
+3. start the _sqlite3_ DB with `python3 manage.py makemigrations` and `python3 manage.py migrate`.
+4. create an admin user with the command ```python manage.py createsuperuser```.
+5. start the server with the command ````python manage.py runserver 0:8000````, which starts the TopoFuzzer REST API interface. 
 
 **Deploy the mininet _"fuzzing network"_ with isolated redirection proxies per service**
 
