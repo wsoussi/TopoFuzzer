@@ -1,29 +1,5 @@
 # <img src="./templates/images/LOGO2.png" alt="drawing" width="150"/>  TopoFuzzer - A Network Topology Fuzzer 
 
-[![License: MIT](https://img.shields.io/static/v1?label=license&message=MIT&color=blue)](https://mit-license.org/)
-[![GitHub issues](https://img.shields.io/github/issues/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/issues)
-[![GitHub forks](https://img.shields.io/github/forks/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/network)
-[![GitHub stars](https://img.shields.io/github/stars/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/stargazers)
-[![](https://img.shields.io/static/v1?label=docs&message=passing&color=green)](https://github.com/wsoussi/TopoFuzzer/wiki)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=alert_status)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=ncloc)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_index)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=reliability_rating)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=vulnerabilities)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=bugs)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=code_smells)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-[![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_rating)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
-
-<div style="text-align: center;">
-<a href="https://github.com/wsoussi/TopoFuzzer">
-<img src="https://raw.githubusercontent.com/wsoussi/TopoFuzzer/main/templates/images/github_logo_icon.png">
-</a>
-<a href="https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer">
-<img src="https://sonarcloud.io/images/project_badges/sonarcloud-black.svg">
-</a>
-</div>
-
 -----------------------------------------
 
 ## :page_with_curl: What is TopoFuzzer?
@@ -50,10 +26,10 @@ TopoFuzzer is a gateway node with two main functionalities:
 - Python3.6.9 (```sudo apt install python3.6```)
 - Python3-pip (```sudo apt install python3-pip```)
 - Mininet 2.3.0 (follow option 2  of the mininet guide http://mininet.org/download/)
-- redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM.
+- redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM. To do this edit ```/etc/redis/redis.conf```
+ by changing the line ```bind 127.0.0.1::1``` to ```bind 0.0.0.0``` and uncommenting ```# requirepass <yourpassword>```. Then restart redis with `sudo /etc/init.d/redis-server restart`.
 
-
-**INSTALL:**
+## Install TopoFuzzer
 
 Use the following commands to install TopoFuzzer:
 1. ```bash 
@@ -69,11 +45,17 @@ Use the following commands to install TopoFuzzer:
    source venv/bin/activate
    ```
 5. ```
-   pip install -r requirements.txt
-**DEPLOY:**
-1. change the file `settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP` and `REDIS_PORT` (default port is 6379)
-2. create an admin user with the command ```python manage.py createsuperuser```
-3. start the server with the command ````python manage.py runserver 0:8000````, which starts the TopoFuzzer REST API interface 
+   pip3 install -r requirements.txt
+   ```
+
+
+## Deploy TopoFuzzer
+
+1. change the file `TopoFuzzer/settings.py` to put the host IP and the redis port in the correspondent field `TOPOFUZZER_IP`, `REDIS_PORT` (default port is 6379), and `REDIS_PASSWORD` to _\<yourpassword\>_.
+2. also in `TopoFuzzer/settings.py`, add the public IP of your hosting machine to `ALLOWED_HOSTS`.
+3. start the _sqlite3_ DB with `python3 manage.py makemigrations` and `python3 manage.py migrate`.
+4. create an admin user with the command ```python manage.py createsuperuser```.
+5. start the server with the command ````python manage.py runserver 0:8000````, which starts the TopoFuzzer REST API interface. 
 
 **Deploy the mininet _"fuzzing network"_ with isolated redirection proxies per service**
 
@@ -87,6 +69,7 @@ This option is convenient when the isolation of traffic between services is not 
 5. add _net_admin_ rights to the redirection proxy with ````sudo setcap cap_net_raw,cap_net_admin=eip proxy_handler/management/commands/singleHostProxy.py````
 6. Start the single redirection proxy using the command ````sudo python manage.py singleHostProxy````
 
+> Sudo privileges will be needed to run the script with _net_admin_ rights
 
 ## :book: Usage and documentation:
 Now you can transfer open connections to different instances of your service dynamically and control the mininet middle-network using your SDNC.
