@@ -84,7 +84,7 @@ sqlparse==0.4.2
 tomli==1.2.3
 tqdm==4.64.1
 twine==3.8.0
-Twisted==17.9.0
+Twisted==22.10.0
 typing_extensions==4.1.1
 uritemplate==4.1.1
 uritemplate.py==3.0.2
