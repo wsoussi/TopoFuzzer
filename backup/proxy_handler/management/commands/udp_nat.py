@@ -12,7 +12,8 @@ import json
 
 # Connect to our Rs1 routeedis instance
 redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
-                                  port=settings.REDIS_PORT, password= settings.REDIS_PASSWORD, db=0, charset='utf-8', decode_responses=True)
+                                  port=settings.REDIS_PORT, password= "topofuzzer", db=0, charset='utf-8', decode_responses=True)
+
 
 def udp_forwarder(mn_ip, vnf_ip):
     # add NAT rule

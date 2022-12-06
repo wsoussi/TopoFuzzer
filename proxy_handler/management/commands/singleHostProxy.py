@@ -17,7 +17,7 @@ threads = []
 
 # Connect to our redis instance
 redis_instance = redis.StrictRedis(host=settings.TOPOFUZZER_IP,
-                                  port=settings.REDIS_PORT, db=0, charset='utf-8', decode_responses=True)
+                                  port=settings.REDIS_PORT, password= settings.REDIS_PASSWORD, db=0, charset='utf-8', decode_responses=True)
 
 class Object(object):
     pass
