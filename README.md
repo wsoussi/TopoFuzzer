@@ -5,7 +5,6 @@
 [![GitHub forks](https://img.shields.io/github/forks/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/network)
 [![GitHub stars](https://img.shields.io/github/stars/wsoussi/TopoFuzzer)](https://github.com/wsoussi/TopoFuzzer/stargazers)
 [![](https://img.shields.io/static/v1?label=docs&message=passing&color=green)](https://github.com/wsoussi/TopoFuzzer/wiki)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=alert_status)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
 [![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=ncloc)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
 [![](https://sonarcloud.io/api/project_badges/measure?project=wsoussi_TopoFuzzer&metric=sqale_index)](https://sonarcloud.io/summary/overall?id=wsoussi_TopoFuzzer)
