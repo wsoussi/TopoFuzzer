@@ -210,4 +210,4 @@ class Command(BaseCommand):
         else:
             onos_port = 6653
         sdnc_ip = options['sdnc_ip']
-        manage_proxies(onos_ip, sdnc_port)
+        manage_proxies(sdnc_ip, sdnc_port)
