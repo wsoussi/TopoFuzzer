@@ -11,7 +11,7 @@ from django.conf import settings
 import redis
 from mininet.cli import CLI
 from mininet.net import Mininet
-from mininet.node import RemoteController, OVSKernelSwitch, Node
+from mininet.node import RemoteController, OVSKernelSwitch, Node, DefaultController
 import threading
 import asyncio
 import socket
@@ -133,7 +133,10 @@ def start_mininet_with_NAT(onos_ip, onos_sdnc_port):
     # clear whatever is in mininet
     print(os.system("sudo mn -c"))
     # topo = TorusTopo(3,3,1)
-    controller = RemoteController('c0', ip=onos_ip, port=onos_sdnc_port, protocols="OpenFlow13")
+    if onos_ip:
+        controller = RemoteController('c0', ip=onos_ip, port=onos_sdnc_port, protocols="OpenFlow13")
+    else:
+        controller = DefaultController
 
     net = TreeNet(depth=1, fanout=mn_hosts_number, controller=controller, ipBase=mn_ipBase)
     # net = Mininet(topo=topo, controller=controller, ipBase='111.0.0.0/8') #topo=topo
@@ -199,15 +202,15 @@ def manage_proxies(motdec_ip, onos_port):
 class Command(BaseCommand):
     def add_arguments(self, parser):
         # Positional arguments
-        parser.add_argument('--sdnc-ip', dest='sdnc_ip', type=str, help='External SDN Controller hostname or IP address', action="store", required=True)
+        parser.add_argument('--sdnc-ip', dest='sdnc_ip', type=str, help='External SDN Controller hostname or IP address', action="store", required=False)
 
         # Named (optional) arguments
-        parser.add_argument('--sdnc-port', type=int, help='External SDN Controller port', required=False)
+        parser.add_argument('--sdnc-port', dest='sdnc_port', type=int, help='External SDN Controller port', required=False)
 
     def handle(self, *args, **options):
         if options['sdnc_port']:
             sdnc_port = options['sdnc_port']
         else:
-            onos_port = 6653
+            sdnc_port = 6653
         sdnc_ip = options['sdnc_ip']
         manage_proxies(sdnc_ip, sdnc_port)
