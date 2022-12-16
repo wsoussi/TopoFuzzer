@@ -48,6 +48,7 @@ TopoFuzzer is a gateway node with two main functionalities:
 - Operating System: Ubuntu 18.04
 - Python3.6.9 (```sudo apt install python3.6```)
 - Python3-pip (```sudo apt install python3-pip```)
+- Python3-virtualenv (```pip3 install virtualenv```)
 - Mininet 2.3.0 (follow option 2  of the mininet guide http://mininet.org/download/)
 - redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM. To do this edit ```/etc/redis/redis.conf```
  by changing the line ```bind 127.0.0.1::1``` to ```bind 0.0.0.0``` and uncommenting ```# requirepass <yourpassword>```. Then restart redis with `sudo /etc/init.d/redis-server restart`.
@@ -83,6 +84,15 @@ Use the following commands to install TopoFuzzer:
 **Deploy the mininet _"fuzzing network"_ with isolated redirection proxies per service**
 
 4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
+-> For a mininet local default controller remove the --sdnc-ip option.
+
+If the error ```Êxception: Could not find a default OpenFlow controller``` occurs, try:
+```bash
+   sudo apt-get install openvswitch-testcontroller
+   ```
+```bash
+   sudo cp /usr/bin/ovs-testcontroller /usr/bin/ovs-controller
+   ```
 
 
 **Deploy a single redirection proxy for all services (available in v0.2)**
