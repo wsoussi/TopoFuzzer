@@ -21,18 +21,48 @@ the proxy instance are preserved.
 
 The mapping is a hash table implemented with Redis and using two entries per one mapping (i.e., pubIP→privIP and
 privIP→pubIP). This allows fetching the IP addresses in both directions with a constant complexity (i.e., O(1)).
-TopoFuzzer, to distinguish private IPs from public IPs in the bidirectional mapping, it changes the IP string by replacing `.` with `-` for public IPs and with `_` for private IPs. This also allows to write the IPs in the URL path as `.` can only be used in the FQDN part of an URL.
+TopoFuzzer, to distinguish private IPs from public IPs in the bidirectional mapping, it changes the IP string by replacing `.` with `_` for public IPs and with `-` for private IPs. This also allows to write the IPs in the URL path as `.` can only be used in the FQDN part of an URL.
 
 ## Examples
 
-
-### GET - api/mappings
-
+GET - api/mappings
 ```bash
     curl --location --request GET 'http://<topofuzzer_ip>:8000/api/mappings' \
     --header 'Content-Type: text/plain'
 ````
-
+Python
+```bash
+    import requests
+    url = "http://" + topofuzzer_ip + ":" + topofuzzer_port + "/api/mappings/"
+    response = requests.get(url)
+    data = response.json()
+````
 This will return everything related to TopoFuzzer: the services' public IPs and their mappings to private IPs.
 
+### POST
+```bash
+    curl --location --request POST 'http://localhost:8000/api/mappings/' --header 'Content-Type: application/json' --data-raw '{"10-161-2-102": "10.70.0.3"}'
+```
+Python
+```bash
+    import requests
+    url = "http://" + topofuzzer_ip + ":" + topofuzzer_port + "/api/mappings/"
+    payload = {
+            public_ip: private_ip #For example: 10_10_0_1 : 10.10.0.2
+        }
+    requests.post( url, json=payload)
+````
+
+### PUSH
+```bash
+    curl --location --request PUT 'http://localhost:8000/api/mappings/<public_IP>' --header 'Content-Type: application/json' --data-raw '{"new_ip": "10.10.0.3"}'
+```
+```bash
+    import requests
+    url = "http://" + topofuzzer_ip + ":" + topofuzzer_port + "/api/mappings/"
+    payload = {
+            "new_ip": private_ip #no encodeing like 10.10.0.3
+        }
+    requests.put( url + public_ip, json=payload) # public_ip has to be encoded like 10_10_0_1
+````
 
