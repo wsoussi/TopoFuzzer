@@ -93,7 +93,10 @@ If the error ```Êxception: Could not find a default OpenFlow controller``` occu
 ```bash
    sudo cp /usr/bin/ovs-testcontroller /usr/bin/ovs-controller
    ```
-
+If the error ```Exception: Please shut down the controller which is running on port 6653:``` occurs at starting the mininet:
+```bash
+   sudo fuser -k 6653/tcp
+   ```
 
 **Deploy a single redirection proxy for all services (available in v0.2)**
 
