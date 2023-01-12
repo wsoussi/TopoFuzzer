@@ -86,6 +86,7 @@ Use the following commands to install TopoFuzzer:
 4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
 -> For a mininet local default controller remove the --sdnc-ip option.
 
+## Errors
 If the error ```Êxception: Could not find a default OpenFlow controller``` occurs, try:
 ```bash
    sudo apt-get install openvswitch-testcontroller
@@ -97,7 +98,11 @@ If the error ```Exception: Please shut down the controller which is running on p
 ```bash
    sudo fuser -k 6653/tcp
    ```
-
+If Syntax error while runnning a manag.py ... command then you either have to activate the virtual environment or keep the path if the command required sudo
+```bash
+   sudo -E env "PATH=$PATH" python3 manage.py proxy_handler_main
+   ```
+   
 **Deploy a single redirection proxy for all services (available in v0.2)**
 
 This option is convenient when the isolation of traffic between services is not relevant and allows to reduce the CPU consumption by at least 20 fold (for 4 services and over). The main reason is that only one proxy and listener is deployed for all the services.
