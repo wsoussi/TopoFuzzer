@@ -102,6 +102,10 @@ If Syntax error while runnning a manag.py ... command then you either have to ac
 ```bash
    sudo -E env "PATH=$PATH" python3 manage.py proxy_handler_main
    ```
+ If port already in use (not from a different tool but because of a lost ssh connection etc)
+ ```bash
+   fuser 8000/tcp
+   ```
    
 **Deploy a single redirection proxy for all services (available in v0.2)**
 
