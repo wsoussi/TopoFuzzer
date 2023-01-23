@@ -83,7 +83,7 @@ Use the following commands to install TopoFuzzer:
 
 **Deploy the mininet _"fuzzing network"_ with isolated redirection proxies per service**
 
-4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
+4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````sudo python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
 -> For a mininet local default controller remove the --sdnc-ip option.
 
 ## Errors
