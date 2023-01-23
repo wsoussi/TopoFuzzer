@@ -23,6 +23,16 @@ The mapping is a hash table implemented with Redis and using two entries per one
 privIP→pubIP). This allows fetching the IP addresses in both directions with a constant complexity (i.e., O(1)).
 TopoFuzzer, to distinguish private IPs from public IPs in the bidirectional mapping, it changes the IP string by replacing `.` with `_` for public IPs and with `-` for private IPs. This also allows to write the IPs in the URL path as `.` can only be used in the FQDN part of an URL.
 
+Since there is no delete option available using the api at the moment you have to connect to the redis server and manually clear the mappings.
+To connect:
+```
+redis-cli -a topofuzzer
+```
+When connected:
+```
+flushall
+```
+
 ## Examples
 
 GET - api/mappings
