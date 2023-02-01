@@ -75,4 +75,5 @@ Python
         }
     requests.put( url + public_ip, json=payload) # public_ip has to be encoded like 10_10_0_1
 ````
+Therby the public_IP has to be encoded like 192_168_0_1.
 
