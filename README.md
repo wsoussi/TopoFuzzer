@@ -48,6 +48,7 @@ TopoFuzzer is a gateway node with two main functionalities:
 - Operating System: Ubuntu 18.04
 - Python3.6.9 (```sudo apt install python3.6```)
 - Python3-pip (```sudo apt install python3-pip```)
+- Python3-virtualenv (```pip3 install virtualenv```)
 - Mininet 2.3.0 (follow option 2  of the mininet guide http://mininet.org/download/)
 - redis (```sudo apt install redis```). Set redis to use the external IP of your machine or VM. To do this edit ```/etc/redis/redis.conf```
  by changing the line ```bind 127.0.0.1::1``` to ```bind 0.0.0.0``` and uncommenting ```# requirepass <yourpassword>```. Then restart redis with `sudo /etc/init.d/redis-server restart`.
@@ -82,9 +83,30 @@ Use the following commands to install TopoFuzzer:
 
 **Deploy the mininet _"fuzzing network"_ with isolated redirection proxies per service**
 
-4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
+4. start the TopoFuzzer mininet middle network and the redirection proxies per service with the command ````sudo python manage.py proxy_handler_main --sdnc-ip <SDNC>```` where _\<SDNC\>_ is the IP or the hostname of the external SDN controller
+-> For a mininet local default controller remove the --sdnc-ip option.
 
-
+## Errors
+If the error ```Êxception: Could not find a default OpenFlow controller``` occurs, try:
+```bash
+   sudo apt-get install openvswitch-testcontroller
+   ```
+```bash
+   sudo cp /usr/bin/ovs-testcontroller /usr/bin/ovs-controller
+   ```
+If the error ```Exception: Please shut down the controller which is running on port 6653:``` occurs at starting the mininet:
+```bash
+   sudo fuser -k 6653/tcp
+   ```
+If Syntax error while runnning a manag.py ... command then you either have to activate the virtual environment or keep the path if the command required sudo
+```bash
+   sudo -E env "PATH=$PATH" python3 manage.py proxy_handler_main
+   ```
+ If port already in use (not from a different tool but because of a lost ssh connection etc)
+ ```bash
+   sudo fuser -k 8000/tcp
+   ```
+   
 **Deploy a single redirection proxy for all services (available in v0.2)**
 
 This option is convenient when the isolation of traffic between services is not relevant and allows to reduce the CPU consumption by at least 20 fold (for 4 services and over). The main reason is that only one proxy and listener is deployed for all the services.
