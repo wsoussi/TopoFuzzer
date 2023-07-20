@@ -119,3 +119,22 @@ This option is convenient when the isolation of traffic between services is not 
 ## :book: Usage and documentation:
 Now you can transfer open connections to different instances of your service dynamically and control the mininet middle-network using your SDNC.
 More details on the deployment, the usage of TopoFuzzer, and the description of the REST API interface is detailed in the Wiki/Documentation here: [Wiki](https://github.com/wsoussi/TopoFuzzer/wiki)
+
+
+## Citing the Project
+To cite this repository in publications:
+
+```bibtex
+@INPROCEEDINGS{10154367,
+  author={Soussi, Wissem and Christopoulou, Maria and Anagnostopoulos, Themis and Gür, Gürkan and Stiller, Burkhard},
+  booktitle={NOMS 2023-2023 IEEE/IFIP Network Operations and Management Symposium}, 
+  title={TopoFuzzer — A Network Topology Fuzzer for Moving Target Defense in the Telco Cloud}, 
+  year={2023},
+  volume={},
+  number={},
+  pages={1-5},
+  doi={10.1109/NOMS56928.2023.10154367}}
+```
+
+## Acknowledgments
+The initial work to develop TopoFuzzer was partially funded by the EU's Horizon 2020 Research and Innovation Programme under grant number 871808 ([5G-PPP INSPIRE-5Gplus](https://www.inspire-5gplus.eu/)).
