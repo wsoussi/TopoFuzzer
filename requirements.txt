@@ -80,7 +80,7 @@ sphinxcontrib-htmlhelp==2.0.0
 sphinxcontrib-jsmath==1.0.1
 sphinxcontrib-qthelp==1.0.3
 sphinxcontrib-serializinghtml==1.1.5
-sqlparse==0.5.0
+sqlparse==0.5.4
 tomli==1.2.3
 tqdm==4.66.3
 twine==3.8.0
